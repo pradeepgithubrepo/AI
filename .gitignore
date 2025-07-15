@@ -4,6 +4,16 @@
 # But NOT these folders (un-ignore)
 !fleet/
 !fleet/**
+!langchain-rfp/
+!langchain-rfp/**
+!langgraph_2/
+!langgraph_2/**
+!phidata/
+!phidata/**
+!sidekick/
+!sidekick/**
+!E2EAgent/
+!E2EAgent/**
 
 # Optionally, do not ignore .gitignore itself
 !.gitignore
