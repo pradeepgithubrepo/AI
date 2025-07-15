@@ -1,0 +1,9 @@
+# Ignore everything
+/*
+
+# But NOT these folders (un-ignore)
+!fleet/
+!fleet/**
+
+# Optionally, do not ignore .gitignore itself
+!.gitignore

@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fleet-simulator-1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fleet-simulator-1
+  template:
+    metadata:
+      labels:
+        app: fleet-simulator-1
+    spec:
+      containers:
+      - name: fleet-simulator
+        image: pradeepgithubrepo/fleet-simulator:v1
+        imagePullPolicy: Never
+        env:
+        - name: EVENTHUB_CONNECTION_STRING
+          valueFrom:
+            secretKeyRef:
+              name: eventhub-secret
+              key: connection-string
+        - name: EVENTHUB_ENTITY_NAME
+          value: "es_82b11647-83d2-42eb-af7c-7da3aecb4b48"
+        - name: NUM_TRUCKS
+          value: "100"
+        - name: TRUCK_ID_OFFSET
+          value: "0"
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fleet-simulator-3
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fleet-simulator-3
+  template:
+    metadata:
+      labels:
+        app: fleet-simulator-3
+    spec:
+      containers:
+      - name: fleet-simulator
+        image: pradeepgithubrepo/fleet-simulator:v1
+        imagePullPolicy: Never
+        env:
+        - name: EVENTHUB_CONNECTION_STRING
+          valueFrom:
+            secretKeyRef:
+              name: eventhub-secret
+              key: connection-string
+        - name: EVENTHUB_ENTITY_NAME
+          value: "es_82b11647-83d2-42eb-af7c-7da3aecb4b48"
+        - name: NUM_TRUCKS
+          value: "100"
+        - name: TRUCK_ID_OFFSET
+          value: "200"
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+---
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: eventhub-secret
+type: Opaque
+stringData:
+  connection-string: "Endpoint=sb://esehdbnc9hwndepakcj97w.servicebus.windows.net/;SharedAccessKeyName=key_1522e5a0-a155-418b-9c4a-915086efbc16;SharedAccessKey=wEV+OVsFdyearnl6mllEAPsETgCbWnEni+AEhLkRJEk="
