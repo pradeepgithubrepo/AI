@@ -17,3 +17,6 @@
 
 # Optionally, do not ignore .gitignore itself
 !.gitignore
+
+# Ignore all .env files everywhere
+*.env.env
