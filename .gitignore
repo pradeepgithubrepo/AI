@@ -2,8 +2,7 @@
 /*
 
 # But NOT these folders (un-ignore)
-!fleet/
-!fleet/**
+
 !langchain-rfp/
 !langchain-rfp/**
 !langgraph_2/
