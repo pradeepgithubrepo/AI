@@ -1,9 +1,10 @@
 import os
 import langchain
-
+import getpass
 from langchain_community.chat_message_histories import FirestoreChatMessageHistory
 from langchain_openai import AzureChatOpenAI
-# from google import genai
+from google import genai
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
 langchain.verbose = False
 langchain.debug = False
@@ -28,9 +29,19 @@ class Helperclass:
         )
         return client
 
-    # def gemini_client(self):
-    #     """
-    #     Creates and returns a Google Gemini client using the API key from environment variables.
-    #     """
-    #     api_key = os.getenv("GEMINI_API_KEY")
-    #     return genai.Client(api_key=api_key)
+    def gemini_client(self):
+        """
+        Creates and returns a Google Gemini client using the API key from environment variables.
+        """
+        
+        # client = genai.Client()
+        # model_version = "gemini-embedding-001"
+        # result = client.models.embed_content(
+        #         model=model_version,
+        #         contents="What is the meaning of life?")
+
+        # print(result.embeddings)
+        os.environ["GOOGLE_API_KEY"] = os.getenv("GEMINI_API_KEY")
+        embeddings_model = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
+        return embeddings_model
+
