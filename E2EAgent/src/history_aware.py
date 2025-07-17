@@ -6,9 +6,9 @@ import os
 from langchain_chroma import Chroma
 from utils.utility import Helperclass
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain.chains import create_history_aware_retriever, create_retrieval_chain
-from langchain.chains.combine_documents import create_stuff_documents_chain
+from langchain.chains import create_history_aware_retriever
 from langchain_core.messages import HumanMessage, AIMessage
+from langchain_core.runnables import RunnableLambda
 
 class VectorStoreManager:
     def __init__(self, collection_name: str, persist_directory: str = "./chroma_db"):
@@ -47,26 +47,41 @@ class RAGChain:
             retriever,
             contextualize_q_prompt
         )
-        qa_prompt = ChatPromptTemplate.from_messages([
-            ("system", "You are a helpful AI assistant. Use the following context to answer the user's question."),
-            ("system", "Context: {context}"),
+        # Prompt that makes it clear the LLM must use the context
+        self.qa_prompt = ChatPromptTemplate.from_messages([
+            ("system", "You are a helpful AI assistant. Use ONLY the following context to answer the user's question. If the answer is not in the context, say you don't know."),
+            ("system", "Context:\n{context}"),
             MessagesPlaceholder(variable_name="chat_history"),
             ("human", "{input}")
         ])
-        self.question_answer_chain = create_stuff_documents_chain(self.azure_llm, qa_prompt)
-        self.rag_chain = create_retrieval_chain(self.history_aware_retriever, self.question_answer_chain)
 
     def run(self, queries):
         chat_history = []
+        results = []
         for question in queries:
-            answer = self.rag_chain.invoke({"input": question, "chat_history": chat_history})['answer']
+            # Step 1: Get relevant context from retriever
+            context_docs = self.history_aware_retriever.invoke({"input": question, "chat_history": chat_history})
+            # context_docs is a list of Document objects; join their content
+            context = "\n\n".join([doc.page_content for doc in context_docs])
+            # Step 2: Pass context and question to LLM prompt
+            prompt_vars = {
+                "context": context,
+                "chat_history": chat_history,
+                "input": question
+            }
+            answer = self.azure_llm.invoke(self.qa_prompt.format_prompt(**prompt_vars).to_messages()).content
             print(f"Human: {question}")
             print(f"AI: {answer}\n")
             chat_history.extend([
                 HumanMessage(content=question),
                 AIMessage(content=answer)
             ])
-        return chat_history
+            results.append({
+                "question": question,
+                "context": context,
+                "answer": answer
+            })
+        return results
 
 class RAGPipeline:
     def __init__(self, collection_name: str, embedding_function, persist_directory: str = "./chroma_db"):
@@ -88,11 +103,15 @@ if __name__ == "__main__":
     embedding_function = helper.gemini_client()  # or helper.openai_client() for Azure
 
     queries = [
-        "Who are the guys specialized in pyspark and databricks?",
-        "For the above guys what other skills do they have, tabulate it?",
+        "Where can I find information about Pyspark?",
         "Give me 2 names who are well experienced in Pyspark. Also give me references from where this was taken"
     ]
 
     rag_pipeline = RAGPipeline(collection_name, embedding_function, persist_directory)
     rag_pipeline.load_vectorstore()
-    rag_pipeline.query(queries, k=20)
+    results = rag_pipeline.query(queries, k=20)
+    print("Final RAG results:")
+    for i, res in enumerate(results, 1):
+        print(f"Query {i}: {res['question']}")
+        print(f"Context used:\n{res['context']}\n")
+        print(f"RAG Answer: {res['answer']}\n")
