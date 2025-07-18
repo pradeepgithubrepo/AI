@@ -13,6 +13,8 @@
 !sidekick/**
 !E2EAgent/
 !E2EAgent/**
+!E2E_chat_rag/
+!E2E_chat_rag/**
 
 # Optionally, do not ignore .gitignore itself
 !.gitignore
